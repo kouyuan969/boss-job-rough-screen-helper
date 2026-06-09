@@ -1,0 +1,13 @@
+.DS_Store
+*.zip
+*.crx
+*.pem
+*.key
+*.log
+logs/
+dist/
+build/
+node_modules/
+.env
+.env.*
+coverage/
