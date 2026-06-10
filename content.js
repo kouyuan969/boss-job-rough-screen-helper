@@ -4,7 +4,8 @@
 
   const DEFAULT_TARGET_KEYWORDS = [];
   const DEFAULT_PER_KEYWORD_MAX = 100;
-  const RULE_VERSION = "rough-screen-v13";
+  const EXTENSION_VERSION = "0.1.1";
+  const RULE_VERSION = "rough-screen-v14";
   const REVIEW_THRESHOLD = 50;
   const RULE_SEED_LIMIT = 5;
   const MAX_EMPTY_SCROLL_ATTEMPTS = 5;
@@ -1710,16 +1711,15 @@
     const positive = strategy.positiveReference.slice(0, RULE_SEED_LIMIT).join("、") || "按岗位性质和目标方向自动加分";
     const negative = strategy.directExclude.slice(0, RULE_SEED_LIMIT).join("、") || "待生成规则后由 DeepSeek 分析；当前仅使用底层通用安全过滤";
     return [
-      `配置来源：本地预览，点击“生成搜索词”后会由 DeepSeek 重算。`,
-      `我要找：${snapshot.target.jobNature} + ${directions}`,
-      `必须满足：${strategy.mustHave.join("；")}。`,
-      `可以接受：${strategy.acceptable.join("；")}。`,
-      `待复核：${(strategy.reviewOnly || []).slice(0, 4).join("；") || "边界岗位人工确认"}。`,
+      `当前目标：${snapshot.target.jobNature} + ${directions}`,
+      `开始前确认：搜索词、加分词、排除词没有跑偏或互相冲突。`,
+      `处理方式：${strategy.scoring.favoriteScore}分以上自动收藏，${strategy.scoring.reviewScore}-${strategy.scoring.favoriteScore - 1}分待复核，低于${strategy.scoring.reviewScore}分跳过。`,
       `直接排除：${negative}`,
-      `收藏策略：${strategy.scoring.favoriteScore}分以上收藏，${strategy.scoring.reviewScore}-${strategy.scoring.favoriteScore - 1}分待复核，低于${strategy.scoring.reviewScore}分跳过。`,
+      `安全边界：只做粗筛、收藏和记录；不打招呼、不投递、不读聊天。`,
+      ``,
+      `详细规则：必须匹配${snapshot.target.jobNature}岗位，并命中${directions}方向。方向相关但不够确定的岗位进入待复核。`,
       `加分参考：${positive}`,
-      `安全限制：今日最多扫${strategy.safety.dailyScanLimit || "不限"}，今日最多藏${strategy.safety.dailyFavoriteLimit || "不限"}，每扫${strategy.safety.pauseEvery}个休息${strategy.safety.pauseRangeSec[0]}-${strategy.safety.pauseRangeSec[1]}秒。`,
-      `使用边界：${strategy.boundary}；遇到验证或账号异常立即停止。`
+      `今日上限：最多扫${strategy.safety.dailyScanLimit || "不限"}，最多藏${strategy.safety.dailyFavoriteLimit || "不限"}，每扫${strategy.safety.pauseEvery}个休息${strategy.safety.pauseRangeSec[0]}-${strategy.safety.pauseRangeSec[1]}秒。`
     ].join("\n");
   }
 
@@ -2149,7 +2149,7 @@
       <div class="baf-title">
         <div class="baf-title-main">
           <strong>BOSS岗位粗筛助手</strong>
-          <span>拖动移动</span>
+          <span>v${EXTENSION_VERSION} / ${RULE_VERSION}</span>
         </div>
         <button id="baf-toggle" type="button">收起</button>
       </div>
@@ -2179,11 +2179,11 @@
           </div>
           <div class="baf-hint baf-block-hint">目标方向尽量写到行业、产品或场景。只写“互联网”“软件”会很宽。</div>
           <details class="baf-config-preview">
-            <summary>配置摘要 / 规则预览</summary>
+            <summary>本次扫描确认</summary>
             <pre id="baf-config-summary"></pre>
             <div class="baf-field baf-preview-actions">
               <button id="baf-copy-config" type="button" class="baf-muted">复制配置</button>
-              <span class="baf-hint">后续网页端和智能体会读取这份配置。</span>
+              <span class="baf-hint">用于备份当前筛选设置，排查问题时再复制。</span>
             </div>
           </details>
         </div>
@@ -3006,16 +3006,16 @@
     const positive = strategy.positiveReference.slice(0, RULE_SEED_LIMIT).join("、") || "按岗位性质和目标方向自动加分";
     const negative = strategy.directExclude.slice(0, RULE_SEED_LIMIT).join("、") || "无明确直接排除词；边界岗位先进待复核";
     return [
-      `配置来源：DeepSeek 已生成，已做目标方向冲突清洗。`,
-      `我要找：${strategy.target.jobNature} + ${directions}`,
-      `必须满足：${strategy.mustHave.join("；")}。`,
-      `可以接受：${strategy.acceptable.join("；")}。`,
-      `待复核：${(strategy.reviewOnly || []).slice(0, 4).join("；") || "边界岗位人工确认"}。`,
+      `当前目标：${strategy.target.jobNature} + ${directions}`,
+      `规则来源：DeepSeek 已生成，已做目标方向冲突清洗。`,
+      `开始前确认：搜索词、加分词、排除词没有跑偏或互相冲突。`,
+      `处理方式：${strategy.scoring.favoriteScore}分以上自动收藏，${strategy.scoring.reviewScore}-${strategy.scoring.favoriteScore - 1}分待复核，低于${strategy.scoring.reviewScore}分跳过。`,
       `直接排除：${negative}`,
-      `收藏策略：${strategy.scoring.favoriteScore}分以上收藏，${strategy.scoring.reviewScore}-${strategy.scoring.favoriteScore - 1}分待复核，低于${strategy.scoring.reviewScore}分跳过。`,
+      `安全边界：只做粗筛、收藏和记录；不打招呼、不投递、不读聊天。`,
+      ``,
+      `详细规则：必须匹配${strategy.target.jobNature}岗位，并命中${directions}方向。方向相关但不够确定的岗位进入待复核。`,
       `加分参考：${positive}`,
-      `安全限制：今日最多扫${strategy.safety.dailyScanLimit || "不限"}，今日最多藏${strategy.safety.dailyFavoriteLimit || "不限"}，每扫${strategy.safety.pauseEvery}个休息${strategy.safety.pauseRangeSec[0]}-${strategy.safety.pauseRangeSec[1]}秒。`,
-      `使用边界：${strategy.boundary}；遇到验证或账号异常立即停止。`
+      `今日上限：最多扫${strategy.safety.dailyScanLimit || "不限"}，最多藏${strategy.safety.dailyFavoriteLimit || "不限"}，每扫${strategy.safety.pauseEvery}个休息${strategy.safety.pauseRangeSec[0]}-${strategy.safety.pauseRangeSec[1]}秒。`
     ].join("\n");
   }
 
