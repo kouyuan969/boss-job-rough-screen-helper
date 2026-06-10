@@ -4,8 +4,15 @@
 
   const DEFAULT_TARGET_KEYWORDS = [];
   const DEFAULT_PER_KEYWORD_MAX = 100;
-  const EXTENSION_VERSION = "0.1.2";
-  const RULE_VERSION = "rough-screen-v15";
+  const EXTENSION_VERSION = "0.1.3";
+  const RULE_VERSION = "rough-screen-v16";
+  const AI_PROVIDERS = {
+    deepseek: { label: "DeepSeek", model: "deepseek-chat" },
+    qwen: { label: "通义千问", model: "qwen-plus" },
+    zhipu: { label: "智谱 GLM", model: "glm-4-flash" },
+    moonshot: { label: "Kimi", model: "moonshot-v1-8k" },
+    siliconflow: { label: "硅基流动", model: "Qwen/Qwen2.5-72B-Instruct" }
+  };
   const REVIEW_THRESHOLD = 50;
   const RULE_SEED_LIMIT = 5;
   const MAX_EMPTY_SCROLL_ATTEMPTS = 5;
@@ -62,7 +69,7 @@
     ai: {
       provider: "deepseek",
       apiKey: "",
-      model: "deepseek-v4-flash"
+      model: AI_PROVIDERS.deepseek.model
     }
   };
 
@@ -186,20 +193,20 @@
     try {
       const saved = JSON.parse(localStorage.getItem(AI_SETTINGS_KEY) || "null") || {};
       return {
-        provider: "deepseek",
+        provider: AI_PROVIDERS[saved.provider] ? saved.provider : "deepseek",
         apiKey: saved.apiKey || "",
-        model: saved.model || "deepseek-v4-flash"
+        model: saved.model || AI_PROVIDERS[saved.provider]?.model || AI_PROVIDERS.deepseek.model
       };
     } catch (_) {
-      return { provider: "deepseek", apiKey: "", model: "deepseek-v4-flash" };
+      return { provider: "deepseek", apiKey: "", model: AI_PROVIDERS.deepseek.model };
     }
   }
 
   function saveAiSettings() {
     state.aiSettings = {
-      provider: "deepseek",
+      provider: AI_PROVIDERS[state.aiSettings.provider] ? state.aiSettings.provider : "deepseek",
       apiKey: String(state.aiSettings.apiKey || "").trim(),
-      model: String(state.aiSettings.model || "deepseek-v4-flash").trim() || "deepseek-v4-flash"
+      model: String(state.aiSettings.model || AI_PROVIDERS[state.aiSettings.provider]?.model || AI_PROVIDERS.deepseek.model).trim() || AI_PROVIDERS.deepseek.model
     };
     localStorage.setItem(AI_SETTINGS_KEY, JSON.stringify(state.aiSettings));
   }
@@ -1477,8 +1484,9 @@
     config.safety.pauseEvery = Math.max(0, Number(document.querySelector("#baf-pause-every")?.value || config.safety.pauseEvery));
     config.safety.pauseMinSec = Math.max(0, Number(document.querySelector("#baf-pause-min")?.value || config.safety.pauseMinSec));
     config.safety.pauseMaxSec = Math.max(0, Number(document.querySelector("#baf-pause-max")?.value || config.safety.pauseMaxSec));
+    state.aiSettings.provider = String(document.querySelector("#baf-ai-provider")?.value || state.aiSettings.provider || "deepseek").trim();
     state.aiSettings.apiKey = String(document.querySelector("#baf-ai-key")?.value || state.aiSettings.apiKey || "").trim();
-    state.aiSettings.model = String(document.querySelector("#baf-ai-model")?.value || state.aiSettings.model || "deepseek-v4-flash").trim();
+    state.aiSettings.model = String(document.querySelector("#baf-ai-model")?.value || state.aiSettings.model || AI_PROVIDERS[state.aiSettings.provider]?.model || AI_PROVIDERS.deepseek.model).trim();
     saveAiSettings();
     state.settings = panelSettingsSnapshot();
     saveSettings(state.settings);
@@ -1640,7 +1648,7 @@
         ...localStrategy.safety,
         ...(aiStrategy.strategy.safety || {})
       },
-      generatedBy: "deepseek",
+      generatedBy: state.aiSettings.provider || "ai",
       generatedAt: aiStrategy.createdAt
     };
     return {
@@ -1688,9 +1696,10 @@
         dislikedWords: [...(state.userPrefs.dislikedWords || [])]
       },
       ai: {
-        provider: "deepseek",
+        provider: state.aiSettings.provider || "deepseek",
+        providerLabel: AI_PROVIDERS[state.aiSettings.provider]?.label || state.aiSettings.provider || "DeepSeek",
         enabled: Boolean(state.aiSettings.apiKey),
-        model: state.aiSettings.model || "deepseek-v4-flash"
+        model: state.aiSettings.model || AI_PROVIDERS[state.aiSettings.provider]?.model || AI_PROVIDERS.deepseek.model
       },
       safety: {
         dailyScanLimit: Number(config.safety.dailyScanLimit || 0),
@@ -1774,8 +1783,9 @@
     setPanelValue("#baf-pause-every", config.safety.pauseEvery);
     setPanelValue("#baf-pause-min", config.safety.pauseMinSec);
     setPanelValue("#baf-pause-max", config.safety.pauseMaxSec);
+    setPanelValue("#baf-ai-provider", state.aiSettings.provider || "deepseek");
     setPanelValue("#baf-ai-key", state.aiSettings.apiKey);
-    setPanelValue("#baf-ai-model", state.aiSettings.model || "deepseek-v4-flash");
+    setPanelValue("#baf-ai-model", state.aiSettings.model || AI_PROVIDERS[state.aiSettings.provider]?.model || AI_PROVIDERS.deepseek.model);
     setPanelValue("#baf-keywords", settings.search?.keywords || currentSearchKeyword());
     setPanelChecked("#baf-include-blank", settings.search?.includeRecommendation ?? true);
     setPanelChecked("#baf-expand-keywords", settings.search?.expandKeywords ?? true);
@@ -2077,8 +2087,9 @@
     setPanelValue("#baf-pause-every", config.safety.pauseEvery);
     setPanelValue("#baf-pause-min", config.safety.pauseMinSec);
     setPanelValue("#baf-pause-max", config.safety.pauseMaxSec);
+    setPanelValue("#baf-ai-provider", state.aiSettings.provider || "deepseek");
     setPanelValue("#baf-ai-key", state.aiSettings.apiKey);
-    setPanelValue("#baf-ai-model", state.aiSettings.model || "deepseek-v4-flash");
+    setPanelValue("#baf-ai-model", state.aiSettings.model || AI_PROVIDERS[state.aiSettings.provider]?.model || AI_PROVIDERS.deepseek.model);
     setPanelValue("#baf-positive", (config.filters.customPositive || []).join("\n"));
     setPanelValue("#baf-negative", (config.filters.customNegative || []).join("\n"));
     setPanelChecked("#baf-include-blank", (state.campaign.keywords || []).includes(""));
@@ -2222,14 +2233,16 @@
         <details class="baf-section baf-advanced">
           <summary>高级规则</summary>
           <div class="baf-ai-box">
-            <div class="baf-section-title">DeepSeek 生成</div>
+            <div class="baf-section-title">AI 生成</div>
             <div class="baf-field">
+              <label>服务商</label>
+              <select id="baf-ai-provider" class="baf-ai-provider">${Object.entries(AI_PROVIDERS).map(([key, item]) => `<option value="${key}" ${key === (state.aiSettings.provider || "deepseek") ? "selected" : ""}>${item.label}</option>`).join("")}</select>
               <label>API Key</label>
-              <input id="baf-ai-key" class="baf-ai-key" type="password" placeholder="sk-..." />
+              <input id="baf-ai-key" class="baf-ai-key" type="password" placeholder="填对应服务商的 Key" />
               <label>模型</label>
-              <input id="baf-ai-model" class="baf-ai-model" value="${escapeAttr(state.aiSettings.model || "deepseek-v4-flash")}" />
+              <input id="baf-ai-model" class="baf-ai-model" value="${escapeAttr(state.aiSettings.model || AI_PROVIDERS[state.aiSettings.provider]?.model || AI_PROVIDERS.deepseek.model)}" />
             </div>
-            <div class="baf-hint">填 Key 后，“生成搜索词”和“生成加分词/排除词”会优先用 DeepSeek；生成后仍建议手动删减。</div>
+            <div class="baf-hint">支持 DeepSeek、通义千问、智谱 GLM、Kimi、硅基流动。填对应服务商的 Key 后，生成搜索词和规则会优先用 AI；生成后仍建议手动删减。</div>
           </div>
           <div class="baf-field">
             <label>当前列表最多扫</label>
@@ -2545,6 +2558,9 @@
       #boss-ai-autofav-panel input.baf-ai-key {
         width: 185px;
       }
+      #boss-ai-autofav-panel select.baf-ai-provider {
+        width: 150px;
+      }
       #boss-ai-autofav-panel input.baf-ai-model {
         width: 135px;
       }
@@ -2749,6 +2765,11 @@
     });
     panel.addEventListener("change", event => {
       if (event.target.closest(".baf-feedback")) return;
+      if (event.target.id === "baf-ai-provider") {
+        const provider = event.target.value;
+        const modelInput = panel.querySelector("#baf-ai-model");
+        if (modelInput && AI_PROVIDERS[provider]) modelInput.value = AI_PROVIDERS[provider].model;
+      }
       schedulePanelSettingsSave();
     });
 
@@ -2897,14 +2918,27 @@
 
   function parseAiJson(content) {
     const raw = String(content || "").trim().replace(/^```json/i, "").replace(/^```/, "").replace(/```$/, "").trim();
-    return JSON.parse(raw);
+    try {
+      return JSON.parse(raw);
+    } catch (_) {
+      const objectStart = raw.indexOf("{");
+      const objectEnd = raw.lastIndexOf("}");
+      if (objectStart >= 0 && objectEnd > objectStart) {
+        return JSON.parse(raw.slice(objectStart, objectEnd + 1));
+      }
+      throw new Error("AI 没有返回可解析的 JSON");
+    }
   }
 
   function aiConfigured() {
     return Boolean(String(document.querySelector("#baf-ai-key")?.value || state.aiSettings.apiKey || "").trim());
   }
 
-  function callDeepSeek(messages, maxTokens = 1400) {
+  function currentAiProviderLabel() {
+    return AI_PROVIDERS[state.aiSettings.provider]?.label || state.aiSettings.provider || "AI";
+  }
+
+  function callAiProvider(messages, maxTokens = 1400) {
     readPanelConfig();
     return new Promise((resolve, reject) => {
       if (typeof chrome === "undefined" || !chrome.runtime?.sendMessage) {
@@ -2912,9 +2946,10 @@
         return;
       }
       chrome.runtime.sendMessage({
-        type: "deepseek-chat",
+        type: "ai-chat",
+        provider: state.aiSettings.provider || "deepseek",
         apiKey: state.aiSettings.apiKey,
-        model: state.aiSettings.model || "deepseek-v4-flash",
+        model: state.aiSettings.model || AI_PROVIDERS[state.aiSettings.provider]?.model || AI_PROVIDERS.deepseek.model,
         messages,
         maxTokens
       }, response => {
@@ -2924,7 +2959,7 @@
           return;
         }
         if (!response?.ok) {
-          reject(new Error(response?.error || "DeepSeek 调用失败"));
+          reject(new Error(response?.error || `${currentAiProviderLabel()} 调用失败`));
           return;
         }
         resolve(response.content);
@@ -2997,7 +3032,7 @@
       salary: local.salary,
       safety: local.safety,
       boundary: local.boundary,
-      generatedBy: "deepseek"
+      generatedBy: state.aiSettings.provider || "ai"
     };
   }
 
@@ -3007,7 +3042,7 @@
     const avoidWords = strategy.directExclude.slice(0, RULE_SEED_LIMIT).join("、") || "未填写本次避开词";
     return [
       `当前目标：${strategy.target.jobNature} + ${directions}`,
-      `规则来源：DeepSeek 已生成，已做目标方向冲突清洗。`,
+      `${currentAiProviderLabel()} 已生成规则，已做目标方向冲突清洗。`,
       `开始前确认：搜索词、加分词、排除词没有跑偏或互相冲突。`,
       `本次避开：${avoidWords}`,
       `说明：这些词只服务于当前方向，不是所有用户的通用排除项。`,
@@ -3085,10 +3120,10 @@
         })
       }
     ];
-    const content = await callDeepSeek(messages, 1100);
+    const content = await callAiProvider(messages, 1100);
     const parsed = parseAiJson(content);
     const keywords = sanitizeAiWords(parsed.search_keywords, 30);
-    if (!keywords.length) throw new Error("DeepSeek 没有返回有效搜索词");
+    if (!keywords.length) throw new Error("AI 没有返回有效搜索词");
     applyAiStrategy(parsed);
     return { keywords, note: norm(parsed.note || parsed.manual_review_tip || "") };
   }
@@ -3139,11 +3174,11 @@
         })
       }
     ];
-    const content = await callDeepSeek(messages, 700);
+    const content = await callAiProvider(messages, 700);
     const parsed = parseAiJson(content);
     const positive = sanitizePositiveWordsByNature(parsed.positive_keywords, RULE_SEED_LIMIT);
     const negative = filterConflictingNegativeWords(sanitizeAiWords(parsed.negative_keywords, RULE_SEED_LIMIT));
-    if (!positive.length && !negative.length) throw new Error("DeepSeek 没有返回有效规则词");
+    if (!positive.length && !negative.length) throw new Error("AI 没有返回有效规则词");
     return { positive, negative, note: norm(parsed.note || "") };
   }
 
@@ -3154,13 +3189,13 @@
     resetRulesForNewProfile();
     if (aiConfigured()) {
       try {
-        updateStatus(statusSummary("DeepSeek 正在生成搜索词..."));
+        updateStatus(statusSummary(`${currentAiProviderLabel()} 正在生成搜索词...`));
         const aiResult = await generateSearchKeywordsWithAi();
         generated = [...new Set([...aiResult.keywords, ...searchKeywordsFromProfile()])].slice(0, 18);
         aiNote = aiResult.note;
         aiUsed = true;
       } catch (error) {
-        setNote("#baf-keyword-note", `DeepSeek 生成失败，已改用本地规则：${String(error?.message || error)}`);
+        setNote("#baf-keyword-note", `AI 生成失败，已改用本地规则：${String(error?.message || error)}`);
       }
     }
     if (!generated.length) generated = searchKeywordsFromProfile();
@@ -3176,7 +3211,7 @@
     readPanelConfig();
     setNote(
       "#baf-keyword-note",
-      `${aiUsed ? "已用 DeepSeek" : "已按本地规则"}按「${profileNotePrefix()}」生成 ${generated.length} 个搜索词。\n${aiNote ? `${aiNote}\n` : ""}重要：先人工确认这一框，删掉不想看的词，补上你知道的岗位叫法；确认后再生成加分词/排除词。第一次每词先跑 100-200。`
+      `${aiUsed ? `已用 ${currentAiProviderLabel()}` : "已按本地规则"}按「${profileNotePrefix()}」生成 ${generated.length} 个搜索词。\n${aiNote ? `${aiNote}\n` : ""}重要：先人工确认这一框，删掉不想看的词，补上你知道的岗位叫法；确认后再生成加分词/排除词。第一次每词先跑 100-200。`
     );
     updateStatus(statusSummary(`已生成搜索词：${generated.length} 个。`));
     return true;
@@ -3198,13 +3233,13 @@
     let aiUsed = false;
     if (!options.onlyIfEmpty && aiConfigured()) {
       try {
-        updateStatus(statusSummary("DeepSeek 正在生成加分词/排除词..."));
+        updateStatus(statusSummary(`${currentAiProviderLabel()} 正在生成加分词/排除词...`));
         const aiResult = await generateRulesWithAi();
         generated = { positive: aiResult.positive, negative: aiResult.negative };
         aiNote = aiResult.note;
         aiUsed = true;
       } catch (error) {
-        setNote("#baf-rules-note", `DeepSeek 生成失败，已改用本地规则：${String(error?.message || error)}`);
+        setNote("#baf-rules-note", `AI 生成失败，已改用本地规则：${String(error?.message || error)}`);
       }
     }
     if (!generated) generated = ruleWordsFromKeywords(keywords);
@@ -3213,7 +3248,7 @@
     readPanelConfig();
     setNote(
       "#baf-rules-note",
-      `${aiUsed ? "已用 DeepSeek" : "已按本地规则"}按「${profileNotePrefix()}」生成少量种子词：加分 ${generated.positive.length} 个、排除 ${generated.negative.length} 个。\n${aiNote ? `${aiNote}\n` : ""}建议手动看一眼：加分词只保留最贴近目标的岗位叫法；排除词只放明显不想看的岗位类型。`
+      `${aiUsed ? `已用 ${currentAiProviderLabel()}` : "已按本地规则"}按「${profileNotePrefix()}」生成少量种子词：加分 ${generated.positive.length} 个、排除 ${generated.negative.length} 个。\n${aiNote ? `${aiNote}\n` : ""}建议手动看一眼：加分词只保留最贴近目标的岗位叫法；排除词只放明显不想看的岗位类型。`
     );
     if (!options.silent) {
       updateStatus(statusSummary(`已生成加分词/排除词：加分 ${generated.positive.length} 个，排除 ${generated.negative.length} 个。`));
