@@ -4,8 +4,8 @@
 
   const DEFAULT_TARGET_KEYWORDS = [];
   const DEFAULT_PER_KEYWORD_MAX = 100;
-  const EXTENSION_VERSION = "0.1.1";
-  const RULE_VERSION = "rough-screen-v14";
+  const EXTENSION_VERSION = "0.1.2";
+  const RULE_VERSION = "rough-screen-v15";
   const REVIEW_THRESHOLD = 50;
   const RULE_SEED_LIMIT = 5;
   const MAX_EMPTY_SCROLL_ATTEMPTS = 5;
@@ -1709,15 +1709,15 @@
     const strategy = snapshot.screeningStrategy;
     const directions = snapshot.target.directions.slice(0, 6).join("、") || "未填写";
     const positive = strategy.positiveReference.slice(0, RULE_SEED_LIMIT).join("、") || "按岗位性质和目标方向自动加分";
-    const negative = strategy.directExclude.slice(0, RULE_SEED_LIMIT).join("、") || "待生成规则后由 DeepSeek 分析；当前仅使用底层通用安全过滤";
+    const avoidWords = strategy.directExclude.slice(0, RULE_SEED_LIMIT).join("、") || "未填写本次避开词";
     return [
       `当前目标：${snapshot.target.jobNature} + ${directions}`,
       `开始前确认：搜索词、加分词、排除词没有跑偏或互相冲突。`,
-      `处理方式：${strategy.scoring.favoriteScore}分以上自动收藏，${strategy.scoring.reviewScore}-${strategy.scoring.favoriteScore - 1}分待复核，低于${strategy.scoring.reviewScore}分跳过。`,
-      `直接排除：${negative}`,
+      `本次避开：${avoidWords}`,
+      `说明：这些词只服务于当前方向，不是所有用户的通用排除项。`,
       `安全边界：只做粗筛、收藏和记录；不打招呼、不投递、不读聊天。`,
       ``,
-      `详细规则：必须匹配${snapshot.target.jobNature}岗位，并命中${directions}方向。方向相关但不够确定的岗位进入待复核。`,
+      `详细规则：必须匹配${snapshot.target.jobNature}岗位，并命中${directions}方向。收藏标准按上方宽松/标准/严格按钮执行。`,
       `加分参考：${positive}`,
       `今日上限：最多扫${strategy.safety.dailyScanLimit || "不限"}，最多藏${strategy.safety.dailyFavoriteLimit || "不限"}，每扫${strategy.safety.pauseEvery}个休息${strategy.safety.pauseRangeSec[0]}-${strategy.safety.pauseRangeSec[1]}秒。`
     ].join("\n");
@@ -3004,16 +3004,16 @@
   function buildAiSummaryText(parsed, strategy) {
     const directions = strategy.target.directions.slice(0, 6).join("、") || "未填写";
     const positive = strategy.positiveReference.slice(0, RULE_SEED_LIMIT).join("、") || "按岗位性质和目标方向自动加分";
-    const negative = strategy.directExclude.slice(0, RULE_SEED_LIMIT).join("、") || "无明确直接排除词；边界岗位先进待复核";
+    const avoidWords = strategy.directExclude.slice(0, RULE_SEED_LIMIT).join("、") || "未填写本次避开词";
     return [
       `当前目标：${strategy.target.jobNature} + ${directions}`,
       `规则来源：DeepSeek 已生成，已做目标方向冲突清洗。`,
       `开始前确认：搜索词、加分词、排除词没有跑偏或互相冲突。`,
-      `处理方式：${strategy.scoring.favoriteScore}分以上自动收藏，${strategy.scoring.reviewScore}-${strategy.scoring.favoriteScore - 1}分待复核，低于${strategy.scoring.reviewScore}分跳过。`,
-      `直接排除：${negative}`,
+      `本次避开：${avoidWords}`,
+      `说明：这些词只服务于当前方向，不是所有用户的通用排除项。`,
       `安全边界：只做粗筛、收藏和记录；不打招呼、不投递、不读聊天。`,
       ``,
-      `详细规则：必须匹配${strategy.target.jobNature}岗位，并命中${directions}方向。方向相关但不够确定的岗位进入待复核。`,
+      `详细规则：必须匹配${strategy.target.jobNature}岗位，并命中${directions}方向。收藏标准按上方宽松/标准/严格按钮执行。`,
       `加分参考：${positive}`,
       `今日上限：最多扫${strategy.safety.dailyScanLimit || "不限"}，最多藏${strategy.safety.dailyFavoriteLimit || "不限"}，每扫${strategy.safety.pauseEvery}个休息${strategy.safety.pauseRangeSec[0]}-${strategy.safety.pauseRangeSec[1]}秒。`
     ].join("\n");
@@ -3065,7 +3065,7 @@
               not_rule_words: "说明这些不是正向词/反向词，只是搜索标题词"
             },
             search_keywords: ["搜索标题词1", "搜索标题词2", "至少12个，最多18个"],
-            config_summary: "面板展示用配置摘要，按我要找、必须满足、可以接受、待复核、直接排除、收藏策略、加分参考、安全限制、使用边界分行输出",
+            config_summary: "面板展示用扫描确认，按当前目标、规则来源、开始前确认、本次避开、说明、安全边界、详细规则分行输出；不要展示具体收藏分数，收藏标准由宽松/标准/严格按钮控制。",
             screening_strategy: {
               must_have: ["必须满足1"],
               acceptable: ["可以接受1"],
