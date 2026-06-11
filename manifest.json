@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "BOSS岗位粗筛助手",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "按用户填写的岗位性质和目标方向筛选BOSS岗位，并记录收藏结果。",
   "permissions": ["storage"],
   "host_permissions": [

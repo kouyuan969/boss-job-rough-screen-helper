@@ -4,8 +4,8 @@
 
   const DEFAULT_TARGET_KEYWORDS = [];
   const DEFAULT_PER_KEYWORD_MAX = 100;
-  const EXTENSION_VERSION = "0.1.4";
-  const RULE_VERSION = "rough-screen-v17";
+  const EXTENSION_VERSION = "0.1.5";
+  const RULE_VERSION = "rough-screen-v18";
   const UPDATE_PAGE_URL = "https://kouyuan969.github.io/boss-job-rough-screen-helper/";
   const AI_PROVIDERS = {
     deepseek: { label: "DeepSeek", model: "deepseek-chat" },
@@ -384,6 +384,42 @@
     };
   }
 
+  function isManufacturingFinanceTarget(target) {
+    return /制造|工厂|生产|车间|工业|汽配|汽车零部件|电子|新能源|机械|五金|设备|纺织|服装|化工|注塑|模具|家电|半导体/.test(norm(target));
+  }
+
+  function manufacturingFinanceKeywords(target) {
+    const raw = norm(target);
+    const industry = raw.replace(/财务|会计|分析|岗位|方向/g, "") || "制造业";
+    const words = [
+      `${industry} 成本会计`,
+      `${industry} 财务`,
+      `${industry} 会计`,
+      "工厂 财务",
+      "工厂 会计",
+      "制造 财务",
+      "生产 总账",
+      "成本核算",
+      "存货会计",
+      "车间统计",
+      "财务主管 工厂",
+      "用友 财务",
+      "金蝶 财务",
+      "上市公司 制造 财务",
+      "专精特新 会计",
+      "高新企业 成本会计",
+      "汽配 财务",
+      "电子 总账",
+      "新能源 财务分析"
+    ];
+    return words;
+  }
+
+  function financeKeywordsFromTarget(target) {
+    if (isManufacturingFinanceTarget(target)) return manufacturingFinanceKeywords(target);
+    return [`${target}财务`, `${target}财务分析`, `${target}会计`, `${target}成本会计`, `${target}总账会计`, `${target}应收应付`, `${target}税务`, `${target}审计`];
+  }
+
   function searchKeywordsFromProfile() {
     const { nature, targets } = keywordProfileFromPanel();
     const words = [];
@@ -403,7 +439,7 @@
       } else if (nature === "product") {
         add([`${target}产品`, `${target}产品经理`, `${target}产品运营`, `${target}需求分析`, `${target}产品规划`, `${target}项目产品`, `${target}平台产品`, `${target}增长产品`]);
       } else if (nature === "finance") {
-        add([`${target}财务`, `${target}财务分析`, `${target}会计`, `${target}成本会计`, `${target}总账会计`, `${target}应收应付`, `${target}税务`, `${target}审计`]);
+        add(financeKeywordsFromTarget(target));
       } else if (nature === "tech") {
         add([`${target}工程师`, `${target}开发`, `${target}技术支持`, `${target}应用工程师`, `${target}解决方案工程师`, `${target}测试`, `${target}实施`, `${target}运维`, `${target}架构`, `${target}算法`]);
       } else {
@@ -465,7 +501,10 @@
       add(negative, ["纯销售", "电话销售", "客服专员"]);
     }
     if (nature === "finance") {
-      add(positive, profile.targets.flatMap(target => [`${target}财务`, `${target}财务分析`, `${target}会计`, `${target}成本会计`, `${target}总账会计`, `${target}应收应付`, `${target}税务`]));
+      add(positive, profile.targets.flatMap(target => isManufacturingFinanceTarget(target)
+        ? ["制造财务", "工厂财务", "成本会计", "成本核算", "总账会计"]
+        : [`${target}财务`, `${target}财务分析`, `${target}会计`, `${target}成本会计`, `${target}总账会计`, `${target}应收应付`, `${target}税务`]
+      ));
       add(negative, ["销售代表", "电话销售", "客服专员"]);
     }
     if (nature === "tech") {
@@ -3115,6 +3154,7 @@
           "搜索词要覆盖 3 类：1. 用户直写目标词 + 岗位性质；2. HR 常见同义标题；3. 目标方向的相邻产品或行业叫法。",
           "例子：岗位性质=销售，目标方向=ai应用时，除 ai应用销售 外，还应联想到 Agent销售、智能体销售、AI软件销售、AI SaaS销售、AI解决方案销售、AI产品销售、大模型销售、AIGC销售、智能客服销售、AI知识库销售。",
           "例子：岗位性质=运营，目标方向=ai教育时，可生成 ai教育运营、ai教育客户运营、ai教育用户运营、ai教育增长运营、ai教育平台运营、ai教育产品运营等，但不要生成 AI应用销售。",
+          "例子：岗位性质=财务，目标方向=制造业/工厂时，不要机械生成 制造业财务分析、制造业应收应付；应优先生成 BOSS 常见搜法：制造业 成本会计、工厂 财务、工厂 会计、制造 财务、生产 总账、成本核算、存货会计、车间统计、财务主管 工厂、用友 财务、金蝶 财务、上市公司 制造 财务、专精特新 会计、高新企业 成本会计、汽配 财务、电子 总账、新能源 财务分析。",
           "禁止输出 ai、互联网、软件、企业服务、运营、销售 这类过泛单词；禁止输出纯技能词、行业概念词或不能当岗位标题搜索的词。",
           "必须同时生成 config_summary 和 screening_strategy，但其中正向/反向只是摘要参考：正向参考最多 5 个评分锚点，直接排除最多 5 个明显不想看的岗位类型。",
           "收藏策略：favorite_score 使用 input.screeningStrategy.scoring.favoriteScore；review_score 固定 50；50 分以下跳过。"
@@ -3176,7 +3216,7 @@
           "必须遵守 input.screeningStrategy 和 input.configSummary。",
           "先在 analysis 字段里判断：用户要找的岗位性质、目标行业/产品、哪些词适合作为加分锚点、哪些岗位类型应该排除。",
           "加分词规则：只输出 3-5 个评分锚点，必须紧贴“岗位性质 + 目标方向”。它们用于判断岗位是否更相关，不是搜索词列表，不要复制 optimizedSearchKeywords。",
-          "加分词可以是目标产品/场景词、岗位性质词、少量强相关组合词。例如销售+ai应用可用 AI应用、Agent、AI软件、AI SaaS、解决方案销售；运营+ai教育可用 ai教育运营、用户运营、增长运营、平台运营、产品运营。",
+          "加分词可以是目标产品/场景词、岗位性质词、少量强相关组合词。例如销售+ai应用可用 AI应用、Agent、AI软件、AI SaaS、解决方案销售；运营+ai教育可用 ai教育运营、用户运营、增长运营、平台运营、产品运营；财务+制造业可用 制造财务、工厂财务、成本会计、成本核算、总账会计。",
           "不要输出 To B、企业服务、产品演示、商务谈判这类泛泛加分词，除非它们就是用户目标方向。",
           "排除词规则：只输出 3-5 个用户明显不想看的岗位类型，例如纯电销、门店销售、客服坐席、单休、外包。不要输出行业技术词、硬件词、算力、GPU、CPU、金融线这类大词库词。",
           "关键例子：目标方向=机器人时，不要把 机器人硬件、人形机器人、工业机器人、协作机器人 放进 negative_keywords；如果不确定，放进 review_only，不要放排除词。",

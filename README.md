@@ -4,8 +4,8 @@
 
 它适合先把明显不合适的岗位过滤掉，把可能合适的岗位收藏或放进待复核，再导出表格继续人工判断。
 
-当前版本：`0.1.4`
-规则版本：`rough-screen-v17`
+当前版本：`0.1.5`
+规则版本：`rough-screen-v18`
 更新时间：`2026-06-11`
 
 下载主页：`https://kouyuan969.github.io/boss-job-rough-screen-helper/`
