@@ -4,8 +4,8 @@
 
   const DEFAULT_TARGET_KEYWORDS = [];
   const DEFAULT_PER_KEYWORD_MAX = 100;
-  const EXTENSION_VERSION = "0.1.3";
-  const RULE_VERSION = "rough-screen-v16";
+  const EXTENSION_VERSION = "0.1.4";
+  const RULE_VERSION = "rough-screen-v17";
   const AI_PROVIDERS = {
     deepseek: { label: "DeepSeek", model: "deepseek-chat" },
     qwen: { label: "通义千问", model: "qwen-plus" },
@@ -33,22 +33,8 @@
       low: []
     },
     negative: {
-      hard: [
-        "保险", "贷款", "互联网金融", "计算机相关专业必需", "纯地推",
-        "会销", "招商", "自带资源", "自带行业", "加盟", "金融线",
-        "美业", "日结", "资源变现", "漫剧", "AI漫剧", "短剧",
-        "GEO", "Geo", "geo优化", "AI精准引流", "金融销售",
-        "管培生", "实习生", "储备干部", "招生", "提分",
-        "To C", "个人（To C）", "C端销售", "对接c端",
-        "社交网络与媒体", "文化传媒", "网络传媒", "AI双红利",
-        "双红利赛道", "自带客户", "单休", "大小周", "周日单休"
-      ],
-      soft: [
-        "网站建设", "小程序", "网络推广", "外包", "定制开发",
-        "课程", "培训类产品", "招商",
-        "销冠", "月入", "精准客资", "精准客源", "薪资无上限",
-        "接受应届生", "高中", "圈层", "KOL", "媒体", "渠道资源"
-      ]
+      hard: [],
+      soft: []
     },
     filters: {
       salaryMin: "",
@@ -83,7 +69,7 @@
   const AI_SETTINGS_KEY = "bossAiAutoFavAiSettingsV1";
   const AI_STRATEGY_KEY = "bossAiAutoFavAiStrategyV1";
   const DEBUG_LOG_KEY = "bossAiAutoFavDebugLogsV1";
-  const SETTINGS_VERSION = 7;
+  const SETTINGS_VERSION = 8;
   const SCALE_OPTIONS = [
     { code: "301", label: "0-20人" },
     { code: "302", label: "20-99人" },
@@ -153,6 +139,7 @@
       if (saved.version !== SETTINGS_VERSION) {
         const previousVersion = Number(saved.version || 0);
         if (Number(saved.threshold) === 75) saved.threshold = 60;
+        if (previousVersion < 8 && Number(saved.threshold) === 55) saved.threshold = 50;
         if (Number(saved.maxJobs) === 80) saved.maxJobs = 500;
         if (Number(saved.safety?.dailyScanLimit) === 300) saved.safety.dailyScanLimit = 1000;
         if (previousVersion < 7 && saved.filters) {
@@ -414,6 +401,8 @@
         add([`${target}运营`, `${target}客户运营`, `${target}商家运营`, `${target}用户运营`, `${target}增长运营`, `${target}渠道运营`, `${target}平台运营`, `${target}项目运营`, `${target}产品运营`, `${target}销售运营`]);
       } else if (nature === "product") {
         add([`${target}产品`, `${target}产品经理`, `${target}产品运营`, `${target}需求分析`, `${target}产品规划`, `${target}项目产品`, `${target}平台产品`, `${target}增长产品`]);
+      } else if (nature === "finance") {
+        add([`${target}财务`, `${target}财务分析`, `${target}会计`, `${target}成本会计`, `${target}总账会计`, `${target}应收应付`, `${target}税务`, `${target}审计`]);
       } else if (nature === "tech") {
         add([`${target}工程师`, `${target}开发`, `${target}技术支持`, `${target}应用工程师`, `${target}解决方案工程师`, `${target}测试`, `${target}实施`, `${target}运维`, `${target}架构`, `${target}算法`]);
       } else {
@@ -453,13 +442,10 @@
     add(positive, sourceKeywords);
     for (const keyword of sourceKeywords) {
       const lower = keyword.toLowerCase();
-      if (/教育|课程|培训/.test(lower)) {
-        add(negative, ["招生", "课程销售"]);
-      }
     }
     if (nature === "sales") {
       add(positive, profile.targets.flatMap(target => [`${target}销售`, `${target}商务`, `${target}大客户销售`]));
-      add(negative, ["保险", "贷款", "营业员", "店员", "电话销售"]);
+      add(negative, ["营业员", "店员", "电话销售"]);
     }
     if (nature === "customer_success") {
       add(positive, profile.targets.flatMap(target => [`${target}客户成功`, `${target}客户运营`, `${target}续费`]));
@@ -477,11 +463,14 @@
       add(positive, profile.targets.flatMap(target => [`${target}产品`, `${target}产品经理`, `${target}产品运营`, `${target}需求分析`, `${target}平台产品`]));
       add(negative, ["纯销售", "电话销售", "客服专员"]);
     }
+    if (nature === "finance") {
+      add(positive, profile.targets.flatMap(target => [`${target}财务`, `${target}财务分析`, `${target}会计`, `${target}成本会计`, `${target}总账会计`, `${target}应收应付`, `${target}税务`]));
+      add(negative, ["销售代表", "电话销售", "客服专员"]);
+    }
     if (nature === "tech") {
       add(positive, profile.targets.flatMap(target => [`${target}工程师`, `${target}开发`, `${target}技术支持`]));
       add(negative, ["销售代表", "客户经理", "电话销售"]);
     }
-    add(negative, ["保险", "贷款", "营业员", "店员"]);
     return {
       positive: sanitizePositiveWordsByNature(positive, RULE_SEED_LIMIT),
       negative: [...new Set(filterConflictingNegativeWords(negative))].slice(0, RULE_SEED_LIMIT)
@@ -918,6 +907,7 @@
     const presalesWords = ["售前", "解决方案", "方案顾问", "实施顾问", "POC", "需求调研", "产品演示", "方案演示"];
     const opsWords = ["运营", "商家运营", "平台运营", "用户运营", "增长运营", "数据运营", "活动运营", "渠道运营"];
     const productWords = ["产品经理", "产品运营", "产品负责人", "产品总监", "产品Leader", "产品设计", "PM"];
+    const financeWords = ["财务", "会计", "出纳", "审计", "税务", "成本", "总账", "应收", "应付", "FP&A", "财务分析", "财务经理"];
     const techWords = ["工程师", "开发", "研发", "算法", "前端", "后端", "Java", "Python", "测试", "运维", "架构", "模型训练", "技术支持", "应用工程师"];
     const titleHasTech = hasAny(titlePart, techWords);
     const titleHasBusiness = hasAny(titlePart, [...salesWords, ...csWords, ...presalesWords, "顾问"]);
@@ -927,6 +917,7 @@
     const sourceHasPresales = hasAny(source, presalesWords);
     const sourceHasOps = hasAny(source, opsWords);
     const sourceHasProduct = hasAny(source, productWords);
+    const sourceHasFinance = hasAny(source, financeWords);
 
     if (nature === "sales") {
       if (sourceHasSales) {
@@ -1014,6 +1005,22 @@
       }
     }
 
+    if (nature === "finance") {
+      if (sourceHasFinance) {
+        scoreDelta += 18;
+        hits.push("岗位性质:财务");
+      }
+      if (sourceHasSales && !sourceHasFinance) {
+        scoreDelta -= 25;
+        negatives.push("岗位性质偏销售");
+      }
+      if (titleHasTech && !sourceHasFinance) {
+        scoreDelta -= 45;
+        hardExcluded = true;
+        negatives.push("岗位性质不匹配:技术岗");
+      }
+    }
+
     return { scoreDelta, hits, negatives, hardExcluded };
   }
 
@@ -1039,6 +1046,7 @@
     ];
     const opsRoles = ["运营", "商家运营", "平台运营", "用户运营", "增长运营", "数据运营", "活动运营", "渠道运营"];
     const productRoles = ["产品经理", "产品运营", "产品负责人", "产品总监", "产品Leader", "产品设计", "PM"];
+    const financeRoles = ["财务", "会计", "出纳", "审计", "税务", "成本", "总账", "应收", "应付", "财务分析", "财务经理", "FP&A"];
     const techRoles = ["工程师", "开发", "研发", "算法", "前端", "后端", "Java", "Python", "测试", "运维", "架构", "技术支持"];
     const badTitleRoles = [
       "全栈工程师", "AI应用工程师", "AI应用开发工程师", "应用开发工程师",
@@ -1060,6 +1068,7 @@
     const titleHasAcceptable = hasAny(title, acceptableRoles);
     const titleHasOps = hasAny(title, opsRoles);
     const titleHasProduct = hasAny(title, productRoles);
+    const titleHasFinance = hasAny(title, financeRoles);
     const titleHasTech = hasAny(title, techRoles) || (/工程师/.test(title) && !/销售工程师/.test(title));
     const titleHasConfiguredRole =
       configuredNature === "any" ||
@@ -1068,6 +1077,7 @@
       (configuredNature === "presales" && titleHasAcceptable) ||
       (configuredNature === "operations" && titleHasOps) ||
       (configuredNature === "product" && titleHasProduct) ||
+      (configuredNature === "finance" && titleHasFinance) ||
       (configuredNature === "tech" && titleHasTech);
     const titleHasBadRole = (hasAny(title, badTitleRoles) || titleHasTech) && !titleHasConfiguredRole;
     const hasStrongScene = hasAny(source, targetScenes);
@@ -1145,6 +1155,7 @@
     if (/售前|解决方案|方案|顾问|poc|pre[-\s]?sales/i.test(source)) return "presales";
     if (/产品经理|产品运营|产品负责人|产品总监|产品leader|产品设计|pm/i.test(source)) return "product";
     if (/运营|增长|用户|商家运营|平台运营|渠道运营|活动/.test(source)) return "operations";
+    if (/财务|会计|出纳|审计|税务|成本|总账|应收|应付|fpa|fp&a|finance|accounting/.test(source)) return "finance";
     if (/技术|工程师|开发|研发|算法|前端|后端|测试|运维|架构|java|python/.test(source)) return "tech";
     if (/销售|bd|商务|大客户|客户经理|客户代表|ka|渠道|拓展/.test(source)) return "sales";
     return "any";
@@ -1158,6 +1169,7 @@
     if (lower === "presales") return "售前";
     if (lower === "operations") return "运营";
     if (lower === "product") return "产品";
+    if (lower === "finance") return "财务";
     if (lower === "tech") return "技术";
     if (lower === "any") return "";
     return raw;
@@ -1469,7 +1481,7 @@
   }
 
   function readPanelConfig() {
-    config.threshold = Math.max(REVIEW_THRESHOLD + 1, Number(document.querySelector("#baf-threshold")?.value || config.threshold));
+    config.threshold = Math.max(REVIEW_THRESHOLD, Number(document.querySelector("#baf-threshold")?.value || config.threshold));
     setPanelValue("#baf-threshold", config.threshold);
     config.maxJobs = Number(document.querySelector("#baf-max")?.value || config.maxJobs);
     config.filters.jobNature = norm(document.querySelector("#baf-job-nature")?.value || "");
@@ -1570,6 +1582,7 @@
       if (nature === "presales") targetPositive.push(`${target}售前`, `${target}解决方案`, `${target}方案顾问`);
       if (nature === "operations") targetPositive.push(`${target}运营`, `${target}增长`, `${target}用户运营`);
       if (nature === "product") targetPositive.push(`${target}产品`, `${target}产品经理`, `${target}产品运营`);
+      if (nature === "finance") targetPositive.push(`${target}财务`, `${target}财务分析`, `${target}会计`);
       if (nature === "tech") targetPositive.push(`${target}工程师`, `${target}开发`, `${target}技术支持`);
     }
     const rolePositive = {
@@ -1578,6 +1591,7 @@
       presales: ["售前", "解决方案", "方案顾问", "POC", "产品演示", "需求调研"],
       operations: ["运营", "增长运营", "客户运营", "商家运营", "数据运营", "活动运营"],
       product: ["产品经理", "产品运营", "需求分析", "产品规划", "原型"],
+      finance: ["财务", "会计", "出纳", "审计", "税务", "成本会计", "总账会计", "财务分析"],
       tech: ["工程师", "开发", "研发", "架构", "技术支持", "技术方案"]
     }[nature] || [];
     const positive = [...new Set([...(config.filters.customPositive || []), ...targetPositive, ...rolePositive])];
@@ -1726,7 +1740,7 @@
       `说明：这些词只服务于当前方向，不是所有用户的通用排除项。`,
       `安全边界：只做粗筛、收藏和记录；不打招呼、不投递、不读聊天。`,
       ``,
-      `详细规则：必须匹配${snapshot.target.jobNature}岗位，并命中${directions}方向。收藏标准按上方宽松/标准/严格按钮执行。`,
+      `详细规则：必须匹配${snapshot.target.jobNature}岗位，并命中${directions}方向。收藏标准按上方宽松/标准/严谨按钮执行。`,
       `加分参考：${positive}`,
       `今日上限：最多扫${strategy.safety.dailyScanLimit || "不限"}，最多藏${strategy.safety.dailyFavoriteLimit || "不限"}，每扫${strategy.safety.pauseEvery}个休息${strategy.safety.pauseRangeSec[0]}-${strategy.safety.pauseRangeSec[1]}秒。`
     ].join("\n");
@@ -2178,7 +2192,7 @@
             <button id="baf-generate-profile" type="button" class="baf-mini-primary">生成搜索词</button>
           </div>
           <div class="baf-grid">
-            <label>岗位性质<input id="baf-job-nature" class="baf-full-input" value="${escapeAttr(jobNatureDisplayValue(config.filters.jobNature))}" placeholder="销售 / 运营 / 客户成功 / 产品" /></label>
+            <label>岗位性质<input id="baf-job-nature" class="baf-full-input" value="${escapeAttr(jobNatureDisplayValue(config.filters.jobNature))}" placeholder="财务 / 销售 / 运营 / 客户成功" /></label>
             <label>目标方向<input id="baf-target-keywords" class="baf-full-input" value="${escapeAttr((config.filters.targetKeywords?.length ? config.filters.targetKeywords : DEFAULT_TARGET_KEYWORDS).join("，"))}" placeholder="AI客服 / 跨境电商 / 教育SaaS" /></label>
           </div>
           <div class="baf-salary-row">
@@ -2207,7 +2221,7 @@
           </div>
           <div class="baf-hint baf-block-hint">搜索词在上面生成；这里负责选择扫描方式和手动删改搜索词。</div>
           <label class="baf-keywords-label">搜索词</label>
-          <textarea id="baf-keywords" placeholder="每行一个关键词，也可以用逗号隔开，如：AI客服销售, 跨境电商运营, SaaS客户成功">${currentSearchKeyword()}</textarea>
+          <textarea id="baf-keywords" placeholder="每行一个关键词，也可以用逗号隔开，如：财务分析, 成本会计, SaaS客户成功">${currentSearchKeyword()}</textarea>
           <div id="baf-keyword-note" class="baf-note"></div>
           <div class="baf-hint baf-block-hint">多关键词模式才会自动切换搜索词；当前列表模式只扫当前页面。</div>
           <div class="baf-field">
@@ -2222,9 +2236,9 @@
           <div class="baf-threshold-row">
             <span class="baf-section-title baf-inline-title">收藏标准</span>
             <div class="baf-segments baf-threshold-segments" role="group" aria-label="收藏标准">
-              <button type="button" class="baf-threshold-mode" data-threshold="55">宽松</button>
+              <button type="button" class="baf-threshold-mode" data-threshold="50">宽松</button>
               <button type="button" class="baf-threshold-mode active" data-threshold="60">标准</button>
-              <button type="button" class="baf-threshold-mode" data-threshold="70">严格</button>
+              <button type="button" class="baf-threshold-mode" data-threshold="70">严谨</button>
             </div>
             <label class="baf-score-inline">收藏分<input id="baf-threshold" value="${config.threshold}" /></label>
           </div>
@@ -2266,8 +2280,8 @@
             <span class="baf-hint">先优化搜索词，再生成少量加分词和排除词。</span>
           </div>
           <div class="baf-textareas">
-            <label>正向词<textarea id="baf-positive" placeholder="每行一个，如：AI客服&#10;客户成功&#10;Agent"></textarea></label>
-            <label>反向词<textarea id="baf-negative" placeholder="每行一个，如：保险&#10;贷款&#10;营业员&#10;招生&#10;课程销售"></textarea></label>
+            <label>正向词<textarea id="baf-positive" placeholder="每行一个，如：财务分析&#10;客户成功&#10;Agent"></textarea></label>
+            <label>反向词<textarea id="baf-negative" placeholder="每行一个不想看的词，如：外包&#10;单休&#10;纯电销"></textarea></label>
           </div>
           <div id="baf-rules-note" class="baf-note"></div>
         </details>
@@ -2866,7 +2880,7 @@
     });
     panel.querySelector("#baf-feedback-wide").addEventListener("click", () => {
       const next = adjustThreshold(5);
-      updateStatus(statusSummary(`已提高收藏分到 ${next}，下次会更严格。`));
+      updateStatus(statusSummary(`已提高收藏分到 ${next}，下次会更严谨。`));
     });
     panel.querySelector("#baf-feedback-narrow").addEventListener("click", () => {
       const next = adjustThreshold(-5);
@@ -3048,7 +3062,7 @@
       `说明：这些词只服务于当前方向，不是所有用户的通用排除项。`,
       `安全边界：只做粗筛、收藏和记录；不打招呼、不投递、不读聊天。`,
       ``,
-      `详细规则：必须匹配${strategy.target.jobNature}岗位，并命中${directions}方向。收藏标准按上方宽松/标准/严格按钮执行。`,
+      `详细规则：必须匹配${strategy.target.jobNature}岗位，并命中${directions}方向。收藏标准按上方宽松/标准/严谨按钮执行。`,
       `加分参考：${positive}`,
       `今日上限：最多扫${strategy.safety.dailyScanLimit || "不限"}，最多藏${strategy.safety.dailyFavoriteLimit || "不限"}，每扫${strategy.safety.pauseEvery}个休息${strategy.safety.pauseRangeSec[0]}-${strategy.safety.pauseRangeSec[1]}秒。`
     ].join("\n");
@@ -3100,7 +3114,7 @@
               not_rule_words: "说明这些不是正向词/反向词，只是搜索标题词"
             },
             search_keywords: ["搜索标题词1", "搜索标题词2", "至少12个，最多18个"],
-            config_summary: "面板展示用扫描确认，按当前目标、规则来源、开始前确认、本次避开、说明、安全边界、详细规则分行输出；不要展示具体收藏分数，收藏标准由宽松/标准/严格按钮控制。",
+            config_summary: "面板展示用扫描确认，按当前目标、规则来源、开始前确认、本次避开、说明、安全边界、详细规则分行输出；不要展示具体收藏分数，收藏标准由宽松/标准/严谨按钮控制。",
             screening_strategy: {
               must_have: ["必须满足1"],
               acceptable: ["可以接受1"],
@@ -3145,7 +3159,7 @@
           "加分词规则：只输出 3-5 个评分锚点，必须紧贴“岗位性质 + 目标方向”。它们用于判断岗位是否更相关，不是搜索词列表，不要复制 optimizedSearchKeywords。",
           "加分词可以是目标产品/场景词、岗位性质词、少量强相关组合词。例如销售+ai应用可用 AI应用、Agent、AI软件、AI SaaS、解决方案销售；运营+ai教育可用 ai教育运营、用户运营、增长运营、平台运营、产品运营。",
           "不要输出 To B、企业服务、产品演示、商务谈判这类泛泛加分词，除非它们就是用户目标方向。",
-          "排除词规则：只输出 3-5 个用户明显不想看的岗位类型，例如保险、贷款、营业员、招生、课程销售、电话销售。不要输出行业技术词、硬件词、算力、GPU、CPU、金融线这类大词库词。",
+          "排除词规则：只输出 3-5 个用户明显不想看的岗位类型，例如纯电销、门店销售、客服坐席、单休、外包。不要输出行业技术词、硬件词、算力、GPU、CPU、金融线这类大词库词。",
           "关键例子：目标方向=机器人时，不要把 机器人硬件、人形机器人、工业机器人、协作机器人 放进 negative_keywords；如果不确定，放进 review_only，不要放排除词。",
           "输出数量：positive_keywords 3-5 个，negative_keywords 3-5 个，review_only 0-5 个。少而准，按重要度排序。"
         ].join("\n")
