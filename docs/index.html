@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BOSS 岗位粗筛助手</title>
+  <meta name="description" content="BOSS 岗位粗筛助手下载、安装说明和更新记录。" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./">BOSS 岗位粗筛助手</a>
+    <nav>
+      <a href="#download">下载</a>
+      <a href="#history">更新记录</a>
+      <a href="#agent">高级 Agent</a>
+      <a href="https://github.com/kouyuan969/boss-job-rough-screen-helper" target="_blank" rel="noreferrer">GitHub</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Chrome 扩展 · 当前最新版 v0.1.4</p>
+        <h1>BOSS 岗位先粗筛，再人工复核。</h1>
+        <p class="lead">按岗位性质、目标方向、薪资和排除词判断岗位。合适的自动收藏，不合适的直接记录，最后复制表格复查。</p>
+        <div class="hero-actions" id="download">
+          <a class="primary" href="./downloads/boss-job-rough-screen-helper-v0.1.4.zip" download>下载最新版 v0.1.4</a>
+          <a class="secondary" href="#install">看安装步骤</a>
+        </div>
+        <p class="small">公开包不带个人岗位目标、历史记录、API Key。第一次使用时，先按自己的岗位重新填写。</p>
+      </div>
+      <div class="product-shot" aria-label="插件界面预览">
+        <div class="panel-preview">
+          <div class="panel-head">
+            <div>
+              <strong>BOSS岗位粗筛助手</strong>
+              <span>v0.1.4 / rough-screen-v17</span>
+            </div>
+            <a href="#download">点击升级新版</a>
+          </div>
+          <div class="status">待启动</div>
+          <div class="form-block">
+            <h2>我要找什么岗位</h2>
+            <p>先卡岗位性质，再卡目标方向。</p>
+            <div class="fields">
+              <label>岗位性质<span>财务</span></label>
+              <label>目标方向<span>财务分析</span></label>
+            </div>
+            <div class="salary">薪资 10 - 20 K <b>跳过已扫</b></div>
+          </div>
+          <div class="buttons">
+            <span>启动/继续多词</span>
+            <span>复制表格</span>
+            <span>复制JSON</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="band" id="install">
+      <div class="section-title">
+        <p class="eyebrow">怎么安装</p>
+        <h2>下载后加载到 Chrome</h2>
+      </div>
+      <ol class="steps">
+        <li>下载最新版 zip，并先解压。</li>
+        <li>打开 Chrome，进入 <code>chrome://extensions/</code>。</li>
+        <li>打开右上角「开发者模式」。</li>
+        <li>点击「加载已解压的扩展程序」。</li>
+        <li>选择解压后的插件文件夹。</li>
+        <li>打开 BOSS 直聘岗位列表页，右侧出现助手面板就能用。</li>
+      </ol>
+    </section>
+
+    <section class="history" id="history">
+      <div class="section-title">
+        <p class="eyebrow">历史版本</p>
+        <h2>更新内容</h2>
+      </div>
+      <div class="release-list">
+        <article class="release current">
+          <div class="release-meta">
+            <strong>v0.1.4</strong>
+            <span>rough-screen-v17 · 2026-06-11</span>
+          </div>
+          <ul>
+            <li>收藏标准改为：宽松 50、标准 60、严谨 70。</li>
+            <li>公开包不再带个人岗位偏好词，别人安装后不会继承销售/AI应用数据。</li>
+            <li>本地生成排除词时，不再默认排除保险、贷款、课程销售。</li>
+          </ul>
+        </article>
+        <article class="release">
+          <div class="release-meta">
+            <strong>v0.1.3</strong>
+            <span>rough-screen-v16 · 2026-06-10</span>
+          </div>
+          <ul>
+            <li>“DeepSeek 生成”改为“AI 生成”。</li>
+            <li>新增 DeepSeek、通义千问、智谱 GLM、Kimi、硅基流动。</li>
+            <li>按服务商切换 API 地址，模型名可以手动改。</li>
+          </ul>
+        </article>
+        <article class="release">
+          <div class="release-meta">
+            <strong>v0.1.2</strong>
+            <span>rough-screen-v15 · 2026-06-10</span>
+          </div>
+          <ul>
+            <li>本次扫描确认不再展示具体收藏分数。</li>
+            <li>“直接排除”改为“本次避开”，避免误导其他岗位方向。</li>
+          </ul>
+        </article>
+        <article class="release">
+          <div class="release-meta">
+            <strong>v0.1.1</strong>
+            <span>rough-screen-v14 · 2026-06-10</span>
+          </div>
+          <ul>
+            <li>面板标题显示插件版本和规则版本。</li>
+            <li>“配置摘要 / 规则预览”改为“本次扫描确认”。</li>
+          </ul>
+        </article>
+        <article class="release">
+          <div class="release-meta">
+            <strong>v0.1.0</strong>
+            <span>rough-screen-v13 · 2026-06-10</span>
+          </div>
+          <ul>
+            <li>首次开源版本。</li>
+            <li>支持岗位粗筛、自动收藏、记录、复制表格和多关键词扫描。</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="agent" id="agent">
+      <div>
+        <p class="eyebrow">高级版</p>
+        <h2>全自动找工作 Agent，尽请期待。</h2>
+        <p>后面会做公司筛选、岗位精筛、投递 CRM、简历匹配和跟进提醒。现在先把粗筛助手跑稳。</p>
+      </div>
+      <a class="secondary" href="https://github.com/kouyuan969/boss-job-rough-screen-helper" target="_blank" rel="noreferrer">先关注 GitHub 更新</a>
+    </section>
+  </main>
+
+  <footer>
+    <span>只做粗筛、收藏、记录和复核。</span>
+    <span>不自动打招呼，不自动投递，不读取聊天。</span>
+  </footer>
+</body>
+</html>

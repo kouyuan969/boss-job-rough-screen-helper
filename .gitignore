@@ -1,5 +1,6 @@
 .DS_Store
 *.zip
+!docs/downloads/*.zip
 *.crx
 *.pem
 *.key

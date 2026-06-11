@@ -6,6 +6,7 @@
   const DEFAULT_PER_KEYWORD_MAX = 100;
   const EXTENSION_VERSION = "0.1.4";
   const RULE_VERSION = "rough-screen-v17";
+  const UPDATE_PAGE_URL = "https://kouyuan969.github.io/boss-job-rough-screen-helper/";
   const AI_PROVIDERS = {
     deepseek: { label: "DeepSeek", model: "deepseek-chat" },
     qwen: { label: "通义千问", model: "qwen-plus" },
@@ -2175,6 +2176,7 @@
         <div class="baf-title-main">
           <strong>BOSS岗位粗筛助手</strong>
           <span>v${EXTENSION_VERSION} / ${RULE_VERSION}</span>
+          <a class="baf-update-link" href="${UPDATE_PAGE_URL}" target="_blank" rel="noopener noreferrer">点击升级新版</a>
         </div>
         <button id="baf-toggle" type="button">收起</button>
       </div>
@@ -2377,6 +2379,23 @@
         color: #ccfbf1;
         font-weight: 500;
         font-size: 12px;
+      }
+      #boss-ai-autofav-panel .baf-update-link {
+        display: inline-flex;
+        width: fit-content;
+        margin-top: 4px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: #fff7ed;
+        color: #9a3412;
+        font-size: 12px;
+        font-weight: 800;
+        text-decoration: none;
+        box-shadow: 0 0 0 1px rgba(255, 237, 213, .9);
+      }
+      #boss-ai-autofav-panel .baf-update-link:hover {
+        background: #fed7aa;
+        color: #7c2d12;
       }
       #boss-ai-autofav-panel #baf-toggle {
         flex: 0 0 auto;

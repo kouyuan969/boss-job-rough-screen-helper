@@ -8,6 +8,8 @@
 规则版本：`rough-screen-v17`
 更新时间：`2026-06-11`
 
+下载主页：`https://kouyuan969.github.io/boss-job-rough-screen-helper/`
+
 
 给团队成员看的安装说明可以直接复制这份：[飞书使用说明](docs/飞书使用说明.md)。
 
